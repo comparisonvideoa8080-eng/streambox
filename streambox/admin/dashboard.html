@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Admin Panel | Visits</title>
+<style>
+  :root{--bg:#0f172a;--surface:rgba(255,255,255,.06);--border:rgba(255,255,255,.12);--text:#f1f5f9;--muted:#94a3b8;--accent:#6366f1;--accent2:#818cf8;--ok:#34d399;--warn:#fbbf24;--bad:#f87171}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{min-height:100vh;background:radial-gradient(900px 500px at 10% 0,rgba(99,102,241,.18),transparent 60%),var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+  header{position:sticky;top:0;background:rgba(15,23,42,.85);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:16px 24px;display:flex;align-items:center;justify-content:space-between}
+  header h1{font-size:1.15rem}
+  .wrap{max-width:1080px;margin:0 auto;padding:24px}
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:22px}
+  .stat{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px}
+  .stat .n{font-size:1.6rem;font-weight:700}
+  .stat .l{color:var(--muted);font-size:.82rem;margin-top:2px}
+  table{width:100%;border-collapse:collapse;background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden}
+  th,td{padding:10px 12px;text-align:left;font-size:.85rem;border-bottom:1px solid var(--border)}
+  th{color:var(--muted);font-weight:600;background:rgba(255,255,255,.03)}
+  tr:last-child td{border-bottom:none}
+  .tag{display:inline-block;padding:2px 8px;border-radius:999px;font-size:.75rem;font-weight:600}
+  .tag.granted{background:rgba(52,211,153,.15);color:var(--ok)}
+  .tag.denied{background:rgba(248,113,113,.15);color:var(--bad)}
+  .tag.unavailable, .tag.unknown{background:rgba(251,191,36,.15);color:var(--warn)}
+  .actions{display:flex;gap:10px}
+  button{font:inherit;padding:9px 16px;border-radius:10px;border:1px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer}
+  button:hover{background:rgba(255,255,255,.1)}
+  button.danger{border-color:rgba(248,113,113,.4);color:var(--bad)}
+  .empty{color:var(--muted);padding:30px;text-align:center}
+  .mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.8rem}
+  a.map{color:var(--accent2)}
+</style>
+</head>
+<body>
+<header>
+  <h1>Admin Panel</h1>
+  <form method="POST" action="/admin/logout"><button type="submit">Log out</button></form>
+</header>
+<div class="wrap">
+  <div class="stats" id="stats"></div>
+  <div class="actions" style="margin-bottom:14px">
+    <button id="refreshBtn">Refresh</button>
+    <button id="clearBtn" class="danger">Clear all logs</button>
+  </div>
+  <div id="tableWrap"></div>
+</div>
+
+<script>
+async function load() {
+  const res = await fetch('/api/admin/visits');
+  const visits = await res.json();
+
+  const total = visits.length;
+  const granted = visits.filter(v => v.locationStatus === 'granted').length;
+  document.getElementById('stats').innerHTML = `
+    <div class="stat"><div class="n">${total}</div><div class="l">Total visits logged</div></div>
+    <div class="stat"><div class="n">${granted}</div><div class="l">Location granted</div></div>
+    <div class="stat"><div class="n">${new Set(visits.map(v=>v.ip)).size}</div><div class="l">Unique IPs</div></div>
+  `;
+
+  if (!visits.length) {
+    document.getElementById('tableWrap').innerHTML = '<div class="empty">No visits logged yet.</div>';
+    return;
+  }
+
+  const rows = visits.map(v => {
+    const loc = (v.latitude != null && v.longitude != null)
+      ? `<a class="map" target="_blank" href="https://www.google.com/maps?q=${v.latitude},${v.longitude}">${v.latitude.toFixed(4)}, ${v.longitude.toFixed(4)}</a>`
+      : '—';
+    const time = new Date(v.timestamp).toLocaleString();
+    return `<tr>
+      <td class="mono">${v.ip}</td>
+      <td><span class="tag ${v.locationStatus}">${v.locationStatus}</span></td>
+      <td>${loc}</td>
+      <td>${time}</td>
+      <td class="mono" style="max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${v.userAgent}">${v.userAgent}</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('tableWrap').innerHTML = `
+    <table>
+      <thead><tr><th>IP address</th><th>Location status</th><th>Coordinates</th><th>Time</th><th>User agent</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+
+document.getElementById('refreshBtn').addEventListener('click', load);
+document.getElementById('clearBtn').addEventListener('click', async () => {
+  if (!confirm('Clear all logged visits? This cannot be undone.')) return;
+  await fetch('/api/admin/visits/clear', { method: 'POST' });
+  load();
+});
+
+load();
+</script>
+</body>
+</html>

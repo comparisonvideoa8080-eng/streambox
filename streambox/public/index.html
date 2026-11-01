@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>StreamBox | Watch Now</title>
+<meta name="description" content="Stream the video instantly in a clean, full-screen player.">
+<style>
+  :root{--bg:#0f172a;--surface:rgba(255,255,255,.06);--border:rgba(255,255,255,.12);--text:#f1f5f9;--muted:#94a3b8;--accent:#6366f1;--accent2:#818cf8}
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{background:radial-gradient(900px 500px at 12% 0,rgba(99,102,241,.2),transparent 60%),radial-gradient(800px 500px at 100% 60%,rgba(14,165,233,.12),transparent 60%),var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased;line-height:1.55;min-height:100vh}
+  body.locked{overflow:hidden}
+  a{color:inherit;text-decoration:none}
+  .wrap{width:min(1080px,100% - 32px);margin-inline:auto}
+
+  header{position:sticky;top:0;z-index:5;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);background:rgba(15,23,42,.7);border-bottom:1px solid var(--border)}
+  .nav{display:flex;align-items:center;justify-content:space-between;height:64px}
+  .logo{font-weight:700;letter-spacing:-.01em;display:flex;align-items:center;gap:10px}
+  .logo i{width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,var(--accent),#0ea5e9);display:inline-block}
+  nav a{color:var(--muted);margin-left:22px;font-size:.95rem;transition:color .2s}
+  nav a:hover{color:var(--text)}
+
+  .btn{display:inline-block;padding:13px 24px;font:inherit;font-weight:600;color:#fff;background:var(--accent);border:0;border-radius:12px;cursor:pointer;box-shadow:0 8px 24px rgba(99,102,241,.35);transition:background .2s,transform .1s}
+  .btn:hover{background:var(--accent2)}.btn:active{transform:scale(.98)}
+  .btn:focus-visible{outline:3px solid rgba(165,180,252,.6);outline-offset:2px}
+  .btn.ghost{background:transparent;border:1px solid var(--border);box-shadow:none;color:var(--text)}
+  .btn.ghost:hover{background:var(--surface)}
+
+  .hero{padding:clamp(56px,10vw,120px) 0 48px;text-align:center}
+  .hero h1{font-size:clamp(2.1rem,6vw,3.8rem);letter-spacing:-.03em;line-height:1.08;max-width:15ch;margin:0 auto 16px}
+  .hero h1 span{background:linear-gradient(90deg,var(--accent2),#38bdf8);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .hero p{color:var(--muted);max-width:52ch;margin:0 auto 28px;font-size:1.05rem}
+  .hero .actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+
+  .player-sec{padding:8px 0 56px;display:none;scroll-margin-top:84px}
+  .player-sec.visible{display:block;animation:fade .6s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+  .player{background:#000;border:1px solid var(--border);border-radius:18px;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.55);aspect-ratio:16/9;max-height:80vh}
+  .player video{width:100%;height:100%;object-fit:contain;background:#000;display:block;cursor:pointer}
+
+  section.block{padding:56px 0}
+  .block h2{font-size:clamp(1.5rem,3.5vw,2.1rem);letter-spacing:-.02em;margin-bottom:10px}
+  .block .sub{color:var(--muted);margin-bottom:28px;max-width:56ch}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:24px}
+  .card .ic{width:42px;height:42px;border-radius:12px;background:rgba(99,102,241,.18);display:grid;place-items:center;margin-bottom:14px;font-size:1.2rem}
+  .card h3{font-size:1.05rem;margin-bottom:6px}.card p{color:var(--muted);font-size:.95rem}
+
+  footer{border-top:1px solid var(--border);padding:28px 0;color:var(--muted);font-size:.9rem;text-align:center}
+
+  .overlay{position:fixed;top:0;left:0;right:0;bottom:0;z-index:50;width:100%;height:100vh;height:100dvh;display:grid;place-items:center;padding:16px;overflow:auto;background:rgba(2,6,23,.6);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);transition:opacity .3s,visibility .3s}
+  .overlay.hidden{opacity:0;visibility:hidden;pointer-events:none}
+  .modal{width:min(420px,100%);margin:auto;padding:36px 28px 28px;text-align:center;background:var(--surface);border:1px solid var(--border);border-radius:20px;box-shadow:0 24px 60px rgba(0,0,0,.5);backdrop-filter:blur(24px) saturate(140%);-webkit-backdrop-filter:blur(24px) saturate(140%);animation:rise .5s cubic-bezier(.2,.8,.2,1)}
+  @keyframes rise{from{opacity:0;transform:translateY(16px) scale(.98)}to{opacity:1;transform:none}}
+  .modal .icon{width:56px;height:56px;margin:0 auto 18px;display:grid;place-items:center;border-radius:16px;background:rgba(99,102,241,.18);color:var(--accent2)}
+  .modal .icon svg{width:28px;height:28px}
+  .modal h1{font-size:1.35rem;font-weight:650;letter-spacing:-.01em;margin-bottom:8px}
+  .modal p{color:var(--muted);font-size:.95rem;margin-bottom:10px}
+  .modal .fine{font-size:.8rem;color:var(--muted);opacity:.85;margin-bottom:22px}
+  .modal .btn{width:100%;font-size:1rem}
+</style>
+</head>
+<body class="locked">
+
+<header>
+  <div class="wrap nav">
+    <a class="logo" href="#top"><i></i>StreamBox</a>
+    <nav><a href="#watch">Watch</a><a href="#features">Features</a><a href="#about">About</a></nav>
+  </div>
+</header>
+
+<main id="top">
+  <section class="hero wrap">
+    <h1>Watch it <span>instantly</span>, anywhere.</h1>
+    <p>A clean, fast, full-quality video player that works on any phone, tablet or desktop.</p>
+    <div class="actions">
+      <button class="btn" id="watchBtn" type="button">Watch now</button>
+      <a class="btn ghost" href="#features">Learn more</a>
+    </div>
+  </section>
+
+  <section class="player-sec wrap" id="watch">
+    <div class="player">
+      <video id="player" playsinline preload="auto" src="/video.mp4">Your browser does not support the video tag.</video>
+    </div>
+  </section>
+
+  <section class="block wrap" id="features">
+    <h2>Why StreamBox</h2>
+    <p class="sub">Everything you need for smooth playback, nothing you don't.</p>
+    <div class="grid">
+      <div class="card"><div class="ic">⚡</div><h3>Fast start</h3><p>Preloads the video so playback begins right away.</p></div>
+      <div class="card"><div class="ic">📱</div><h3>Fully responsive</h3><p>Looks and works great on every screen size.</p></div>
+      <div class="card"><div class="ic">🎛️</div><h3>Simple player</h3><p>Tap the video to play or pause.</p></div>
+    </div>
+  </section>
+
+  <section class="block wrap" id="about">
+    <h2>About</h2>
+    <p class="sub">StreamBox is a simple video portal. Press "Watch now" and the player opens right here on the page.</p>
+  </section>
+</main>
+
+<footer><div class="wrap">© <span id="yr"></span> StreamBox. All rights reserved.</div></footer>
+
+<div class="overlay" id="overlay" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+  <div class="modal">
+    <div class="icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>
+    </div>
+    <h1 id="modal-title">Allow location access</h1>
+    <p>This site records your IP address, and your approximate location if you allow it, so the site owner can see visit activity in the admin panel. The video plays whether you allow or deny.</p>
+    <p class="fine">You can decline location and still watch — only your IP will be recorded in that case.</p>
+    <button class="btn" id="allowBtn" type="button">Allow</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  var overlay=document.getElementById('overlay'),sec=document.getElementById('watch'),
+      player=document.getElementById('player'),allow=document.getElementById('allowBtn'),
+      watchBtn=document.getElementById('watchBtn'),done=false;
+  document.getElementById('yr').textContent=new Date().getFullYear();
+
+  function logVisit(status, coords){
+    var body = { locationStatus: status };
+    if (coords) { body.latitude = coords.latitude; body.longitude = coords.longitude; }
+    fetch('/api/log-visit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    }).catch(function(){ /* logging failure should not block the video */ });
+  }
+
+  function playVideo(){
+    sec.classList.add('visible');
+    sec.scrollIntoView({behavior:'smooth',block:'start'});
+    var p=player.play();
+    if(p&&p.catch){p.catch(function(){
+      player.muted=true;
+      var r=player.play(); if(r&&r.catch) r.catch(function(){/* user can tap to play */});
+    });}
+  }
+
+  player.addEventListener('click',function(){ player.paused?player.play():player.pause(); });
+
+  allow.addEventListener('click',function(){
+    if(done) return; done=true;
+    if('geolocation' in navigator){
+      navigator.geolocation.getCurrentPosition(
+        function(pos){ logVisit('granted', pos.coords); },
+        function(){ logVisit('denied'); }
+      );
+    } else {
+      logVisit('unavailable');
+    }
+    overlay.classList.add('hidden');
+    document.body.classList.remove('locked');
+    setTimeout(playVideo,500);
+  });
+
+  watchBtn.addEventListener('click',function(){
+    if(done){ playVideo(); }
+    else { overlay.classList.remove('hidden'); document.body.classList.add('locked'); }
+  });
+})();
+</script>
+</body>
+</html>

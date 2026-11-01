@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Admin Login</title>
+<style>
+  :root{--bg:#0f172a;--surface:rgba(255,255,255,.06);--border:rgba(255,255,255,.12);--text:#f1f5f9;--muted:#94a3b8;--accent:#6366f1;--accent2:#818cf8;--danger:#f87171}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{min-height:100vh;display:grid;place-items:center;background:radial-gradient(900px 500px at 15% 10%,rgba(99,102,241,.22),transparent 60%),var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding:16px}
+  .card{width:min(360px,100%);padding:32px 26px;background:var(--surface);border:1px solid var(--border);border-radius:18px;box-shadow:0 24px 60px rgba(0,0,0,.5);backdrop-filter:blur(20px)}
+  h1{font-size:1.3rem;margin-bottom:4px}
+  p.sub{color:var(--muted);font-size:.9rem;margin-bottom:22px}
+  label{display:block;font-size:.85rem;color:var(--muted);margin-bottom:6px}
+  input{width:100%;padding:11px 12px;margin-bottom:16px;background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:10px;color:var(--text);font:inherit}
+  input:focus{outline:2px solid var(--accent2);border-color:transparent}
+  button{width:100%;padding:12px;font:inherit;font-weight:600;color:#fff;background:var(--accent);border:0;border-radius:10px;cursor:pointer}
+  button:hover{background:var(--accent2)}
+  .err{background:rgba(248,113,113,.12);border:1px solid rgba(248,113,113,.3);color:var(--danger);font-size:.85rem;padding:10px 12px;border-radius:10px;margin-bottom:16px}
+</style>
+</head>
+<body>
+  <div class="card">
+    <h1>Admin Panel</h1>
+    <p class="sub">Sign in to view visit logs.</p>
+    <div id="errBox" class="err" style="display:none">Invalid username or password.</div>
+    <form method="POST" action="/admin/login">
+      <label for="username">Username</label>
+      <input id="username" name="username" autocomplete="username" required>
+      <label for="password">Password</label>
+      <input id="password" name="password" type="password" autocomplete="current-password" required>
+      <button type="submit">Sign in</button>
+    </form>
+  </div>
+  <script>
+    if (location.search.includes('error=1')) document.getElementById('errBox').style.display = 'block';
+  </script>
+</body>
+</html>
